@@ -1,25 +1,47 @@
-var styles = 'border-bottom: 3px solid #00aced;\
+var defaultStyles = 'border-bottom: 1px dotted rgb(0,172,237);\
+				background-color: rgba(0,172,237,0.1);\
 				position: relative;\
 				font-style: italic;\
-				color: #000;\
+				color: rgb(0,172,237);\
 				text-decoration: none;';
 
-
-
-function displayElements() {
-	document.getElementsByClassName('section-preview')[0].style.display = 'block';
-	document.getElementsByClassName('section-code')[0].style.display = 'block';
+function getParameterByName(name, url) {
+	if (!url) url = window.location.href;
+	name = name.replace(/[\[\]]/g, '\\$&');
+	var regex = new RegExp('[?&]' + name + '(=([^&#]*)|&|#|$)');
+	var results = regex.exec(url);
+	if (!results) return null;
+	if (!results[2]) return '';
+	return decodeURIComponent(results[2].replace(/\+/g, ' '));
 }
 
 
-function generate() {
+// Set defaults
 
+if ( getParameterByName('via') ) {
+	document.getElementById('tweetVia').value = getParameterByName('via');
+}
+
+if ( getParameterByName('hashtags') ) {
+	document.getElementById('tweetHashtags').value = getParameterByName('hashtags');
+}
+
+if ( getParameterByName('url') ) {
+	document.getElementById('tweetUrl').value = getParameterByName('url');
+}
+
+
+
+
+
+
+function generate() {
 
 	var tweetText = document.getElementById('tweetText').value;
 	var tweetTextEncoded = encodeURIComponent(tweetText);
 
 	var tweetUrl = document.getElementById('tweetUrl').value;
-	tweetUrl = '&url='+tweetUrl;
+	tweetUrl = '&url='+tweetUrl || '';
 
 	var tweetHashtags = document.getElementById('tweetHashtags').value;
 	tweetHashtags = '&hashtags='+tweetHashtags || '';
@@ -30,10 +52,11 @@ function generate() {
 
 	var url = 'https://twitter.com/intent/tweet/?text='+tweetTextEncoded+tweetUrl+tweetVia+tweetHashtags;
 
+	var tweetStyles = document.getElementById('tweetStyles').value || defaultStyles;
 
-	var element = '<a href="'+url+'" style="'+styles+'" target="_blank">\
-					<span>'+tweetText+'</span>\
-					<img src="https://raw.githubusercontent.com/ireade/inlinetweetjs-email/master/twitter.png" style="height: 15px; width: auto;"> \
+	var element = '<a href="'+url+'" style="'+tweetStyles+'" target="_blank">\
+					<span>'+tweetText+'</span> \
+					<img src="https://raw.githubusercontent.com/ireade/inlinetweetjs-email/gh-pages/twitter.png" style="height: 1em; width: auto;"> \
 					</a>';
 	document.getElementsByClassName('preview')[0].innerHTML = element;
 
@@ -41,7 +64,8 @@ function generate() {
 	element = element.replace(/</g, '&lt;');
 	document.getElementsByClassName('code')[0].innerHTML = element;
 
-	displayElements();
+	document.getElementsByClassName('section-preview')[0].style.display = 'block';
+	document.getElementsByClassName('section-code')[0].style.display = 'block';
 }
 
 
@@ -60,33 +84,25 @@ generateButton.addEventListener('click', function(e) {
 
 function calcTweetCount() {
 
-	var tweetText = document.getElementById('tweetText').value.length;
-	var tweetVia = document.getElementById('tweetVia').value.length;
-	var tweetUrl = document.getElementById('tweetUrl').value.length;
-	var tweetHashtags = document.getElementById('tweetHashtags').value.length;
+	var tweetTextCount = document.getElementById('tweetText').value.length;
+	var tweetViaCount = document.getElementById('tweetVia').value.length;
+	var tweetUrlCount = document.getElementById('tweetUrl').value.length;
+	var tweetHashtagsCount = document.getElementById('tweetHashtags').value.length;
 
-	if ( tweetHashtags > 1 ) {
+	if ( tweetHashtagsCount > 1 ) {
 		var hashtags = document.getElementById('tweetHashtags').value.split(',');
-		tweetHashtags = hashtags.length + hashtags.join().length;
+		tweetHashtagsCount = hashtags.length + hashtags.join().length;
 	}
 
-	var tweetCount = 140 - (tweetText + tweetHashtags + tweetVia + tweetUrl);
+	var tweetCount = 140 - (tweetTextCount + tweetHashtagsCount + tweetViaCount + tweetUrlCount);
+
+
 
 	var tweetCountElement = document.getElementsByClassName('tweet-character-count')[0];
-
 	tweetCountElement.innerHTML = tweetCount;
 
-	if ( tweetCount < 1 ) {
-		generateButton.disabled = true;
-	} else {
-		generateButton.disabled = false;
-	}
-
-	if ( tweetCount < 10 ) {
-		tweetCountElement.style.color = 'red';
-	} else {
-		tweetCountElement.style.color = 'inherit';
-	}
+	generateButton.disabled = tweetCount < 1 ? true : false;
+	tweetCountElement.style.color = tweetCount < 10 ? 'red' : 'inherit';
 
 }
 
